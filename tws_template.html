@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+<title>TWS资源对比</title>
+
+
+<script type="text/javascript" src="jquery-1.9.0.min.js"></script>
+
+<script type="text/javascript">
+$(function(){
+	$("div.ad-job-title").click(
+		function() {
+			$(this).parent().find("div.ad-job").toggle();
+		}
+	);
+	$("div.ad-job").click(
+		function() {
+			$(this).next("div.ad-job-body").toggle();
+		}
+	);
+});
+</script>
+<style type="text/css">
+
+body 
+{ 
+
+}
+div.main
+{
+	width:300px; 
+	font-size: 10.5pt;
+	font-family: "Consolas";
+	border: 1px solid #eaeaea;
+	color: #FFF;
+
+}
+div.ad
+{
+
+}
+div.ad-title
+{
+
+	background-color: #3071A9;
+	padding-top:5px;
+	padding-bottom:5px;
+	font-weight:bold;
+	font-size:16px;
+}
+
+div.ad-body-attr
+{
+	margin-top:1px;
+	padding:2px;
+	background-color: #5CB85C;
+}
+
+div.ad-job-title
+{
+	cursor:pointer;
+	font-weight:bold;
+}
+div.ad-job
+{
+	display:none;
+}
+
+
+div.ad-job-body
+{
+	display:none;
+}
+
+div.ad-job-attr
+{
+	background-color: #F60;
+	margin-top:1px;
+}
+
+div
+{
+	text-align:center;
+}
+</style>
+
+</head>
+
+<body>
+<div class="main">
+
+{content}
+</div>
+</body>
+</html>
