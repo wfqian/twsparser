@@ -6,12 +6,13 @@ import string
 from twsparser import make_all_ad_parser
 from tws import *
 
-
 ad_parser = make_all_ad_parser()
 
 #adruns = make_ad_parser().parseString(
 #    r"ADDEP  ACTION(ADD) PREWSID(PNCP) PREOPNO( 143) ADDEP  ACTION(ADD) PREWSID(PNCP) PREOPNO( 143)", True)
-results = ad_parser.parseFile(r"c:\parseTws.txt", parseAll=True)
+result_ads1 = ad_parser.parseFile(r"c:\parseTws.txt", parseAll=True)
+result_ads2 = ad_parser.parseFile(r"c:\parseTws2.txt", parseAll=True)
+
 
 '''
 ad_dict = {}
@@ -19,7 +20,7 @@ ads = ['SITESWCHBTOAM0', 'SITESWCHBTOAM1', 'SITESWCHBTOAM2', 'SITESWCHBTOAM3', '
 all_job_list = []
 all_pred_job_list = []
 
-for ad in results:
+for ad in result_ads1:
     if ad.adid in ads:
         print ad.adid
         ad_dict[ad.adid] = ad
@@ -36,7 +37,7 @@ file_handle.write('\r\n'.join(all_pred_job_list))
 
 '''
 content = []
-for ad in results:
+for ad in result_ads1:
     content.append(str(ad))
 
 content = ''.join(content)
