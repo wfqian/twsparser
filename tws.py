@@ -29,12 +29,12 @@ class JobSR(object):
 
 
 class Job(object):
-    html_job = '<div class="ad-job">%s</div>'
-    html_job_attr = '<div class="ad-job-attr">%s:%s</div>'
-    html_job_body = '<div class="ad-job-body">%s</div>'
+    HTML_JOB = '<div class="ad-job">%s</div>'
+    HTML_JOB_ATTR = '<div class="ad-job-attr">%s:%s</div>'
+    HTML_JOB_BODY = '<div class="ad-job-body">%s</div>'
 
     def __init__(self, token):
-        self.diff_prop_dict = {}
+        self.diff_attr_dict = {}
         for key in token.keys():
             self.__dict__[key] = getattr(token, key)
 
@@ -42,9 +42,15 @@ class Job(object):
 
         job_body_attrs = []
         for k, v in vars(self).items():
-            job_body_attrs.append(Job.html_job_attr % (k.upper(), v))
+            job_body_attrs.append(Job.HTML_JOB_ATTR % (k.upper(), v))
         job_body_attrs = ''.join(job_body_attrs)
-        return (Job.html_job % self.jobn) + (Job.html_job_body % job_body_attrs)
+        return (Job.HTML_JOB % self.jobn) + (Job.HTML_JOB_BODY % job_body_attrs)
+
+    def has_diff_attr(self):
+        if len(self.diff_attr_dict) > 0:
+            return True
+        else:
+            return False
 
     def compare(self, rhs):
         lhs = self
@@ -53,9 +59,9 @@ class Job(object):
                 if hasattr(rhs, k):
                     rhs_value = getattr(rhs, k)
                     if v != rhs_value:
-                        lhs.diff_prop_dict[k] = 1
+                        lhs.diff_attr_dict[k] = 1
                 else:
-                    lhs.diff_prop_dict[k] = 2
+                    lhs.diff_attr_dict[k] = 2
             else:
                 for left_dep in lhs.deps:
                     found = False
@@ -64,24 +70,24 @@ class Job(object):
                             found = True
                     if not found:
                         left_dep.is_different = True
-                        lhs.diff_prop_dict['deps'] = 1
-
+                        lhs.diff_attr_dict['deps'] = 1
+        return self.has_diff_attr()
 
     def has_deps(self):
         return hasattr(self, 'deps')
 
 
 class Ad(object):
-    html_ad = '<div class="ad">%s</div>'
-    html_ad_title = '<div class="ad-title">%s</div>'
-    html_ad_body = '<div class="ad-body">%s</div>'
-    html_ad_attr = '<div class = "ad-body-attr">%s : %s</div>'
-    html_ad_job_title = '<div class="ad-job-title">All Jobs(Total Number is %s)</div>'
+    HTML_AD = '<div class="ad">%s</div>'
+    HTML_AD_TITLE = '<div class="ad-title">%s</div>'
+    HTML_AD_BODY = '<div class="ad-body">%s</div>'
+    HTML_AD_ATTR = '<div class = "ad-body-attr">%s : %s</div>'
+    HTML_AD_JOB_TITLE = '<div class="ad-job-title">All Jobs(Total Number is %s)</div>'
 
     def __init__(self, token):
         self.job_numbers = 0
         self.job_dict = {}
-        self.diff_prop_dict = {}
+        self.diff_attr_dict = {}
         for key in token.keys():
             self.__dict__[key] = getattr(token, key)
 
@@ -90,7 +96,7 @@ class Ad(object):
             self.job_dict[job.opno] = job.jobn
 
     def __str__(self):
-        ad_title = Ad.html_ad_title % self.adid
+        ad_title = Ad.HTML_AD_TITLE % self.adid
         ad_job_body = []
         for job in self.jobs:
             ad_job_body.append(str(job))
@@ -99,14 +105,20 @@ class Ad(object):
         ad_body_others = []
         for k, v in vars(self).items():
             if k not in ['jobs', 'job_dict']:
-                ad_body_others.append(Ad.html_ad_attr % (k.upper(), v))
+                ad_body_others.append(Ad.HTML_AD_ATTR % (k.upper(), v))
         ad_body_others = ''.join(ad_body_others)
 
         # print ad_body_others
-        ad_job_title = Ad.html_ad_job_title % self.job_numbers
-        ad_jobs = Ad.html_ad_attr % ('Jobs', ad_job_title + ad_job_body)
-        ad_body = Ad.html_ad_body % (ad_body_others + ad_jobs)
-        return Ad.html_ad % (ad_title + ad_body)
+        ad_job_title = Ad.HTML_AD_JOB_TITLE % self.job_numbers
+        ad_jobs = Ad.HTML_AD_ATTR % ('Jobs', ad_job_title + ad_job_body)
+        ad_body = Ad.HTML_AD_BODY % (ad_body_others + ad_jobs)
+        return Ad.HTML_AD % (ad_title + ad_body)
+
+    def has_diff_attr(self):
+        if len(self.diff_attr_dict) > 0:
+            return True
+        else:
+            return False
 
     def compare(self, rhs):
         lhs = self
@@ -115,20 +127,18 @@ class Ad(object):
                 if hasattr(rhs, k):
                     rhs_value = getattr(rhs, k)
                     if v != rhs_value:
-                        lhs.diff_prop_dict[k] = 1
+                        lhs.diff_attr_dict[k] = 1
                 else:
-                    lhs.diff_prop_dict[k] = 2
+                    lhs.diff_attr_dict[k] = 2
             else:
                 if k == 'jobs':
                     for left_job in lhs.jobs:
-                        found = False
+                        found = True
                         for right_job in rhs.jobs:
                             if left_job.jobn == right_job.jobn:
-                                left_job.compare(right_job)
-                                found = True
+                                found = left_job.compare(right_job)
                         if not found:
-                            left_job.diff_prop_dict['job'] = 2
-
+                            left_job.diff_attr_dict['job'] = 2
 
     def gen_job_list(self):
         job_list = []
