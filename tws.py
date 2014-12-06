@@ -42,7 +42,8 @@ class Job(object):
 
         job_body_attrs = []
         for k, v in vars(self).items():
-            job_body_attrs.append(Job.HTML_JOB_ATTR % (k.upper(), v))
+            if k in self.diff_attr_dict:
+                job_body_attrs.append(Job.HTML_JOB_ATTR % (k.upper(), v))
         job_body_attrs = ''.join(job_body_attrs)
         return (Job.HTML_JOB % self.jobn) + (Job.HTML_JOB_BODY % job_body_attrs)
 
@@ -55,22 +56,24 @@ class Job(object):
     def compare(self, rhs):
         lhs = self
         for k, v in vars(lhs).items():
-            if k not in ['deps']:
+            if k not in ['deps', 'diff_attr_dict']:
                 if hasattr(rhs, k):
                     rhs_value = getattr(rhs, k)
                     if v != rhs_value:
+                        #print k
                         lhs.diff_attr_dict[k] = 1
                 else:
                     lhs.diff_attr_dict[k] = 2
             else:
-                for left_dep in lhs.deps:
-                    found = False
-                    for right_dep in rhs.deps:
-                        if left_dep.compare(right_dep):
-                            found = True
-                    if not found:
-                        left_dep.is_different = True
-                        lhs.diff_attr_dict['deps'] = 1
+                if k == 'deps':
+                    for left_dep in lhs.deps:
+                        match = False
+                        for right_dep in rhs.deps:
+                            if left_dep.compare(right_dep):
+                                match = True
+                        if not match:
+                            left_dep.is_different = True
+                            lhs.diff_attr_dict['deps'] = 1
         return self.has_diff_attr()
 
     def has_deps(self):
@@ -99,18 +102,24 @@ class Ad(object):
         ad_title = Ad.HTML_AD_TITLE % self.adid
         ad_job_body = []
         for job in self.jobs:
-            ad_job_body.append(str(job))
+            if job.has_diff_attr():
+                ad_job_body.append(str(job))
         ad_job_body = ''.join(ad_job_body)
 
         ad_body_others = []
         for k, v in vars(self).items():
-            if k not in ['jobs', 'job_dict']:
+            if k not in ['jobs', 'job_dict'] and k in self.diff_attr_dict:
                 ad_body_others.append(Ad.HTML_AD_ATTR % (k.upper(), v))
         ad_body_others = ''.join(ad_body_others)
 
         # print ad_body_others
-        ad_job_title = Ad.HTML_AD_JOB_TITLE % self.job_numbers
-        ad_jobs = Ad.HTML_AD_ATTR % ('Jobs', ad_job_title + ad_job_body)
+        ad_jobs = ''
+        print self.diff_attr_dict
+        if 'job' in self.diff_attr_dict:
+            print self.diff_attr_dict
+            ad_job_title = Ad.HTML_AD_JOB_TITLE % self.job_numbers
+            ad_jobs = Ad.HTML_AD_ATTR % ('Jobs', ad_job_title + ad_job_body)
+
         ad_body = Ad.HTML_AD_BODY % (ad_body_others + ad_jobs)
         return Ad.HTML_AD % (ad_title + ad_body)
 
@@ -122,8 +131,14 @@ class Ad(object):
 
     def compare(self, rhs):
         lhs = self
+        #print "Compare executed here"
+        '''
+        if self.adid == 'SITESWCHBTOAM0':
+            print self.__dict__
+            print rhs.__dict__
+        '''
         for k, v in vars(lhs).items():
-            if k not in ['jobs', 'job_dict']:
+            if k not in ['jobs', 'job_dict', 'diff_attr_dict']:
                 if hasattr(rhs, k):
                     rhs_value = getattr(rhs, k)
                     if v != rhs_value:
@@ -133,12 +148,13 @@ class Ad(object):
             else:
                 if k == 'jobs':
                     for left_job in lhs.jobs:
-                        found = True
+                        has_diff = False
                         for right_job in rhs.jobs:
                             if left_job.jobn == right_job.jobn:
-                                found = left_job.compare(right_job)
-                        if not found:
-                            left_job.diff_attr_dict['job'] = 2
+                                #print "begin job compare"
+                                has_diff = left_job.compare(right_job)
+                        if has_diff:
+                            lhs.diff_attr_dict['job'] = 2
 
     def gen_job_list(self):
         job_list = []
