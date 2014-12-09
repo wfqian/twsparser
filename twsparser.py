@@ -2,13 +2,15 @@ __author__ = 'QWF'
 
 from pyparsing import *
 
-from tws import Job, JobSR, JobDep, Ad
+from tws import Job, JobSR, JobDep, Ad, AdRule, AdRun
 
 
 def make_all_ad_parser():
-
     t_lpare = Literal('(').suppress()
     t_rpare = Literal(')').suppress()
+
+    def make_list(t):
+        pass
 
     def create_ad():
         pass
@@ -48,7 +50,7 @@ def make_all_ad_parser():
     def make_job_parser():
         action = create_expr('ACTION', 'action')
         opno = create_expr('OPNO', 'opno')
-        #jobn = create_expr('JOBN', 'jobn')
+        # jobn = create_expr('JOBN', 'jobn')
         jobn = (Literal('jobN(').suppress() | Literal('JOBN(').suppress()) + Word(alphanums)('jobn') + t_rpare
         wsid = create_expr('WSID', 'wsid')
         adopcatm = create_expr('ADOPCATM', 'adopcatm')
@@ -82,7 +84,7 @@ def make_all_ad_parser():
         restartable = create_expr('RESTARTABLE', 'restartable')
         smoothing = create_expr('SMOOTHING', 'smoothing')
         startday = create_expr('STARTDAY', 'startday')
-        startime = create_expr('STARTTIME', 'startime')
+        starttime = create_expr('STARTTIME', 'starttime')
         time = create_expr('TIME', 'time')
         usesai = create_expr('USESAI', 'usesai')
         usextname = create_expr('USEXTNAME', 'usextname')
@@ -95,7 +97,7 @@ def make_all_ad_parser():
                                           adopjobpol | adoppwto | adopusrsys |
                                           adopwlmclass | aec | ajr | ajsub | clate | condrjob | cscript | descr | dlday | dltime |
                                           duration | form | highrc | jobclass | limfdbk | monitor | prejobn | prewsid | preopno | prewsid |
-                                          prtclass | psnum | reroutable | restartable | smoothing | startday | startime | time | usesai |
+                                          prtclass | psnum | reroutable | restartable | smoothing | startday | starttime | time | usesai |
                                           usextname | usextse | job_adsr) + ZeroOrMore(job_dep)('deps')
         job.setParseAction(lambda t: Job(t))
         return job
@@ -116,7 +118,11 @@ def make_all_ad_parser():
 
     def make_adrule_parser():
         def make_optional_list(name):
-            return Group(Literal(name) + Optional(t_lpare + delimitedList(Word(alphanums), delim=' ').leaveWhitespace() + t_rpare))
+            delimited_list = OneOrMore(Word(alphanums))
+            #print delimited_list
+            rule_list = Optional(Literal('(') + delimited_list + Literal(')'))
+            rule_list.setParseAction(lambda t: make_list(t))
+            return Group(Literal(name) + rule_list)(name.lower())
 
         every = make_optional_list("EVERY")
         only = make_optional_list("ONLY")
@@ -126,9 +132,10 @@ def make_all_ad_parser():
         month = make_optional_list("MONTH")
         period = make_optional_list("PERIOD")
         year = Literal('YEAR')
-        originshift = make_optional_list("EVERY")
+        originshift = make_optional_list("ORIGINSHIFT")
 
         adrule = Literal('ADRULE') + OneOrMore(every | only | last | day | week | month | period | year | originshift)
+
         return adrule
 
     def make_ad_parser():
@@ -139,25 +146,40 @@ def make_all_ad_parser():
         adtype = create_expr('ADTYPE', 'adtype')
         advalfrom = create_expr('ADVALFROM', 'advalfrom')
         calendar = create_expr('CALENDAR', 'calendar')
-        descr = Literal('DESCR(\'').suppress() + Optional(Word(alphanums)) + Literal('\')').suppress()
+        descr = Literal('DESCR(\'').suppress() + Optional(ZeroOrMore(Word(alphanums + '\&'))) + Literal('\')').suppress()
         dlimfdbk = create_expr('DLIMFDBK', 'dlimfdbk')
         dsmoothing = create_expr('DSMOOTHING', 'dsmoothing')
         group = create_expr('GROUP', 'group')
-        odescr = Literal('ODESCR(\'').suppress() + Word(alphanums) + Literal('\')').suppress()
-        owner = Literal('OWNER(\'').suppress() + Word(alphanums) + Literal('\')').suppress()
+        odescr = Literal('ODESCR(\'').suppress() + Word(alphanums)('odescr') + Literal('\')').suppress()
+        owner = Literal('OWNER(\'').suppress() + Word(alphanums)('owner') + Literal('\')').suppress()
         priority = create_expr('PRIORITY', 'priority')
 
-        ad_parts_list = [adid, owner, Optional(action), Optional(adgroupid), Optional(adstat), Optional(adtype),
+        ad_parts_list = [adid, Optional(action), Optional(owner), Optional(adgroupid), Optional(adstat),
+                         Optional(adtype),
                          Optional(advalfrom), Optional(calendar), Optional(descr), Optional(dlimfdbk),
                          Optional(dsmoothing), Optional(odescr), Optional(group), Optional(priority)]
 
         adrun = make_adrun_parser()
-        adrule = make_adrule_parser()
-        job = make_job_parser()
+        adrun.setResultsName('adrun')
+        adrun.setParseAction(lambda t: AdRun(t))
 
-        ad = Literal('ADSTART') + Each(ad_parts_list) + ZeroOrMore(adrun | adrule) + OneOrMore(job)('jobs')
+        adrule = make_adrule_parser()
+        adrule.setResultsName('adrule')
+        adrule.setParseAction(lambda t: AdRule(t))
+        #print adrule
+
+        job = make_job_parser()
+        adsr = make_job_adsr_parser()
+
+        jobsr = Group(job('job') + ZeroOrMore(adsr)('srs'))
+        jobsr.setResultsName('jobsr')
+
+        # ad = Literal('ADSTART') + Each(ad_parts_list) + ZeroOrMore(adrun | adrule) + OneOrMore(job)('jobs')
+        ad_run_rule = Group(adrun + adrule)('runrule')
+        ad = Literal('ADSTART') + Each(ad_parts_list) + ZeroOrMore(ad_run_rule)('runrules') + OneOrMore(jobsr)('jobsrs')
         return ad.setParseAction(lambda t: Ad(t))
 
+    #return make_adrule_parser()
     return OneOrMore(make_ad_parser())
 
 

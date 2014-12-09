@@ -23,6 +23,7 @@ class JobDep(object):
         preadid = getattr(self, 'preadid') if hasattr(self, 'preadid') else 'internal'
         return "%s %s(%s)" % (self.prewsid, preadid, self.preopno)
 
+
 class JobSR(object):
     def __init__(self, token):
         resource = ''
@@ -97,6 +98,20 @@ class Job(object):
         return hasattr(self, 'deps')
 
 
+class AdRule(object):
+    def __init__(self, token):
+        for key in token.keys():
+            self.__dict__[key] = getattr(token, key)
+
+
+class AdRun(object):
+    def __init__(self, token):
+        #print token
+        for key in token.keys():
+            #print key
+            self.__dict__[key] = getattr(token, key)
+
+
 class Ad(object):
     HTML_AD = '<div class="ad">%s</div>'
     HTML_AD_TITLE = '<div class="ad-title">%s</div>'
@@ -112,9 +127,11 @@ class Ad(object):
         for key in token.keys():
             self.__dict__[key] = getattr(token, key)
 
-        self.job_numbers = len(self.jobs)
-        for job in self.jobs:
-            self.job_dict[job.opno] = job.jobn
+        self.job_numbers = len(self.jobsrs)
+        for jobsr in self.jobsrs:
+            self.job_dict[jobsr.job.opno] = jobsr.job.jobn
+
+        #print self.adid
 
     def __str__(self):
         ad_title = Ad.HTML_AD_TITLE % self.adid

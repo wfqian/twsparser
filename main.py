@@ -3,8 +3,10 @@
 __author__ = 'QWF'
 
 import string
+import xlwt
 import argparse
 from twsparser import make_all_ad_parser
+from pyparsing import *
 from tws import *
 
 
@@ -42,7 +44,108 @@ def make_ad_compare(ads1, ads2):
     write_diff_file(ads1, ads2)
 
 
+def write_to_xsl(ads):
+    def format_adrule(adrule):
+        if hasattr(adrule, 'every'):
+            if hasattr(adrule, 'day') and hasattr(adrule, 'week'):
+                return 'EVERYDAY'
+            else:
+                return ''
+        else:
+            pass
 
+    book = xlwt.Workbook()
+    sheet_ad = book.add_sheet('AD')
+    line_no = 0
+
+    ad_job_dict = {}
+    for ad in ads:
+        '''
+        if ad.adid != 'SCACSYSBKP':
+            continue
+        '''
+        ad_job_dict[ad.adid] = ad.job_dict
+        sheet_ad.write(line_no, 0, 'NOVAS2')
+        sheet_ad.write(line_no, 1, '909315004167')
+        sheet_ad.write(line_no, 2, ad.adid)
+        sheet_ad.write(line_no, 3, ad.adtype)
+        sheet_ad.write(line_no, 4, ad.owner)
+        sheet_ad.write(line_no, 5, 'N/A')
+        sheet_ad.write(line_no, 6, 'NEW')
+
+        if hasattr(ad, 'runrules'):
+            cell_content = ''
+            for runrule in ad.runrules:
+                rule = format_adrule(runrule[1])
+                if rule == 'EVERYDAY':
+                    cell_content = 'EVERYDAY'
+                else:
+                    #cell_content = ''
+                    cell_content += "%s{%s}" % (runrule[0].type, rule)
+
+            #sheet_ad.write(line_no, 7, cell_content)
+        line_no += 1
+
+    sheet_job = book.add_sheet('JOB')
+    line_no = 0
+    for ad in ads:
+        for jobsr in ad.jobsrs:
+            sheet_job.write(line_no, 0, 'NOVAS2')
+            sheet_job.write(line_no, 1, '909315004167')
+            sheet_job.write(line_no, 2, jobsr.job.jobn)
+            sheet_job.write(line_no, 3, 'NEW')
+            sheet_job.write(line_no, 4, ad.adid)
+            if not hasattr(jobsr.job, 'highrc'):
+                sheet_job.write(line_no, 5, '0')
+            else:
+                sheet_job.write(line_no, 5, jobsr.job.highrc)
+            sheet_job.write(line_no, 6, jobsr.job.time)
+
+            if hasattr(jobsr.job, 'startday') and hasattr(jobsr.job, 'starttime'):
+                starttime = jobsr.job.starttime[0:2] + ':' + jobsr.job.starttime[2:]
+                sheet_job.write(line_no, 7, '0' + jobsr.job.startday + ' ' + starttime)
+            else:
+                sheet_job.write(line_no, 7, 'N/A')
+            sheet_job.write(line_no, 8, 'N/A')
+            sheet_job.write(line_no, 9, 'ADD')
+            sr_str = ''
+            if hasattr(jobsr, 'srs') and getattr(jobsr, 'srs') != '':
+                for sr in jobsr.srs:
+                    sr_str += sr.resource + '\n'
+            else:
+                sr_str = 'N/A'
+
+            sheet_job.write(line_no, 10, sr_str)
+
+            deps_str = ''
+            if hasattr(jobsr.job, 'deps'):
+                for dep in jobsr.job.deps:
+                    opno = dep.preopno
+                    ad_name = ad.adid
+                    if dep.is_external():
+                        ad_name = dep.preadid
+
+                    if ad_name in ad_job_dict.keys():
+                        try:
+                            job_name = ad_job_dict[ad_name][opno]
+                        except KeyError:
+                            job_name = '------'
+                            #print ad_name
+                            #print '-----'
+                    else:
+                        job_name = 'XXXXXX'
+                    deps_str += job_name + '\n'
+            else:
+                deps_str = 'N/A'
+            if deps_str != 'N/A':
+                deps_str = deps_str[0:-1]
+            style = xlwt.XFStyle()
+            style.alignment.wrap = 1
+
+            sheet_job.write(line_no, 11, deps_str, style)
+            line_no += 1
+
+    book.save(r'c:\ad2.xls')
 
 '''
 parser = argparse.ArgumentParser()
@@ -52,15 +155,15 @@ args = parser.parse_args()
 print args.echo
 '''
 
-
 ad_parser = make_all_ad_parser()
+result_ads1 = ad_parser.parseFile(r"c:\SYSADM.UNLOAD.NV.SAD.D141208A", parseAll=True)
+write_to_xsl(result_ads1)
 
-#adruns = make_ad_parser().parseString(
-#    r"ADDEP  ACTION(ADD) PREWSID(PNCP) PREOPNO( 143) ADDEP  ACTION(ADD) PREWSID(PNCP) PREOPNO( 143)", True)
-result_ads1 = ad_parser.parseFile(r"c:\parseTws.txt", parseAll=True)
+'''
+#result_ads1 = ad_parser.parseFile(r"c:\parseTws.txt", parseAll=True)
 result_ads2 = ad_parser.parseFile(r"c:\parseTws2.txt", parseAll=True)
-
 make_ad_compare(result_ads1, result_ads2)
+'''
 
 
 '''
