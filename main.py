@@ -92,22 +92,30 @@ def write_to_xsl(ads):
         for jobsr in ad.jobsrs:
             sheet_job.write(line_no, 0, 'NOVAS2')
             sheet_job.write(line_no, 1, '909315004167')
+            col2_job = jobsr.job.jobn
             sheet_job.write(line_no, 2, jobsr.job.jobn)
             sheet_job.write(line_no, 3, 'NEW')
+            col4_adid = ad.adid
             sheet_job.write(line_no, 4, ad.adid)
-            if not hasattr(jobsr.job, 'highrc'):
-                sheet_job.write(line_no, 5, '0')
-            else:
-                sheet_job.write(line_no, 5, jobsr.job.highrc)
+            col5_highrc = '0'
+            if hasattr(jobsr.job, 'highrc'):
+                col5_highrc = jobsr.job.highrc
+                sheet_job.write(line_no, 5, col5_highrc)
+            col6_time = jobsr.job.time
             sheet_job.write(line_no, 6, jobsr.job.time)
 
+            col7_starttime = ''
             if hasattr(jobsr.job, 'startday') and hasattr(jobsr.job, 'starttime'):
                 starttime = jobsr.job.starttime[0:2] + ':' + jobsr.job.starttime[2:]
                 sheet_job.write(line_no, 7, '0' + jobsr.job.startday + ' ' + starttime)
+                col7_starttime = '0' + jobsr.job.startday + ' ' + starttime
             else:
                 sheet_job.write(line_no, 7, 'N/A')
+                col7_starttime = 'N/A'
+
             sheet_job.write(line_no, 8, 'N/A')
-            sheet_job.write(line_no, 9, 'ADD')
+
+            col10_str = 'N/A'
             sr_str = ''
             if hasattr(jobsr, 'srs') and getattr(jobsr, 'srs') != '':
                 for sr in jobsr.srs:
@@ -115,13 +123,36 @@ def write_to_xsl(ads):
             else:
                 sr_str = 'N/A'
 
-            sheet_job.write(line_no, 10, sr_str)
+            if sr_str == 'N/A':
+                sheet_job.write(line_no, 9, 'N/A')
+            else:
+                sheet_job.write(line_no, 9, 'ADD')
 
-            deps_str = ''
+            sheet_job.write(line_no, 10, sr_str)
+            sheet_job.write(line_no, 11, 'N/A')
+            sheet_job.write(line_no, 12, 'P')
+            sheet_job.write(line_no, 13, 'Y')
+            sheet_job.write(line_no, 14, 'Y')
+            sheet_job.write(line_no, 15, 'Y')
+            sheet_job.write(line_no, 16, 'Y')
+            line_no += 1
+
             if hasattr(jobsr.job, 'deps'):
                 for dep in jobsr.job.deps:
+                    sheet_job.write(line_no, 0, 'NOVAS2')
+                    sheet_job.write(line_no, 1, '909315004167')
+                    sheet_job.write(line_no, 2, col2_job)
+                    sheet_job.write(line_no, 3, 'UPDATE')
+                    sheet_job.write(line_no, 4, col4_adid)
+                    sheet_job.write(line_no, 5, col5_highrc)
+                    sheet_job.write(line_no, 6, col6_time)
+                    sheet_job.write(line_no, 7, col7_starttime)
+                    sheet_job.write(line_no, 8, 'N/A')
+                    sheet_job.write(line_no, 9, 'ADD')
+                    sheet_job.write(line_no, 10, col10_str)
                     opno = dep.preopno
                     ad_name = ad.adid
+                    job_name = ''
                     if dep.is_external():
                         ad_name = dep.preadid
 
@@ -130,22 +161,26 @@ def write_to_xsl(ads):
                             job_name = ad_job_dict[ad_name][opno]
                         except KeyError:
                             job_name = '------'
-                            #print ad_name
-                            #print '-----'
                     else:
                         job_name = 'XXXXXX'
-                    deps_str += job_name + '\n'
+                    sheet_job.write(line_no, 11, job_name)
+                    sheet_job.write(line_no, 12, 'P')
+                    sheet_job.write(line_no, 13, 'Y')
+                    sheet_job.write(line_no, 14, 'Y')
+                    sheet_job.write(line_no, 15, 'Y')
+                    sheet_job.write(line_no, 16, 'Y')
+                    line_no += 1
+            '''
             else:
                 deps_str = 'N/A'
             if deps_str != 'N/A':
                 deps_str = deps_str[0:-1]
+
             style = xlwt.XFStyle()
             style.alignment.wrap = 1
-
             sheet_job.write(line_no, 11, deps_str, style)
-            line_no += 1
-
-    book.save(r'c:\ad2.xls')
+            '''
+    book.save(r'c:\applications.xls')
 
 '''
 parser = argparse.ArgumentParser()
@@ -156,7 +191,7 @@ print args.echo
 '''
 
 ad_parser = make_all_ad_parser()
-result_ads1 = ad_parser.parseFile(r"c:\SYSADM.UNLOAD.NV.SAD.D141208A", parseAll=True)
+result_ads1 = ad_parser.parseFile(r"c:\SYSADM.WSNOVA.UNLOAD.SAD.D141215", parseAll=True)
 write_to_xsl(result_ads1)
 
 '''
