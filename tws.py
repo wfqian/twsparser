@@ -5,6 +5,7 @@ class JobDep(object):
     def __init__(self, token):
         self.is_different = False
         for key in token.keys():
+            #print key
             self.__dict__[key] = getattr(token, key)
 
     def is_external(self):
@@ -40,9 +41,14 @@ class Job(object):
     HTML_JOB_DEP = '<div class="ad-job-dep">%s</div>'
 
     def __init__(self, token):
+        #print token
+        # print token
         self.diff_attr_dict = {}
         for key in token.keys():
-            self.__dict__[key] = getattr(token, key)
+            if key != 'job':
+                self.__dict__[key] = getattr(token, key)
+
+
 
     def __str__(self):
 
@@ -124,12 +130,15 @@ class Ad(object):
         self.job_numbers = 0
         self.job_dict = {}
         self.diff_attr_dict = {}
+        self.jobs = []
         for key in token.keys():
             self.__dict__[key] = getattr(token, key)
 
-        self.job_numbers = len(self.jobsrs)
         for jobsr in self.jobsrs:
+            self.jobs.append(jobsr.job)
             self.job_dict[jobsr.job.opno] = jobsr.job.jobn
+
+        self.job_numbers = len(self.jobs)
 
         #print self.adid
 
@@ -143,7 +152,7 @@ class Ad(object):
 
         ad_body_others = []
         for k, v in vars(self).items():
-            if k not in ['jobs', 'job_dict'] and k in self.diff_attr_dict:
+            if k not in ['jobs', 'job_dict', 'jobsrs'] and k in self.diff_attr_dict:
                 ad_body_others.append(Ad.HTML_AD_ATTR % (k.upper(), v))
         ad_body_others = ''.join(ad_body_others)
 

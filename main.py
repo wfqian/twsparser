@@ -3,11 +3,9 @@
 __author__ = 'QWF'
 
 import string
-import xlwt
 import argparse
-from twsparser import make_all_ad_parser
-from pyparsing import *
-from tws import *
+import twsparser
+import xlwt
 
 
 def write_diff_file(ads1, ads2):
@@ -21,14 +19,14 @@ def write_diff_file(ads1, ads2):
         content2.append(str(ad))
     content2 = ''.join(content2)
 
-    file_name = r'c:\tws_template.html'
+    file_name = r'assets/tws_template.html'
     file_handle = open(file_name, 'r')
     html = file_handle.read()
     html = string.replace(html, "{content1}", content1)
     html = string.replace(html, "{content2}", content2)
     file_handle.close()
 
-    output_file_name = r'c:\tws.html'
+    output_file_name = r'tws.html'
     file_handle = open(output_file_name, 'w')
     file_handle.write(html)
     file_handle.close()
@@ -80,10 +78,10 @@ def write_to_xsl(ads):
                 if rule == 'EVERYDAY':
                     cell_content = 'EVERYDAY'
                 else:
-                    #cell_content = ''
+                    # cell_content = ''
                     cell_content += "%s{%s}" % (runrule[0].type, rule)
 
-            #sheet_ad.write(line_no, 7, cell_content)
+                    #sheet_ad.write(line_no, 7, cell_content)
         line_no += 1
 
     sheet_job = book.add_sheet('JOB')
@@ -170,36 +168,37 @@ def write_to_xsl(ads):
                     sheet_job.write(line_no, 15, 'Y')
                     sheet_job.write(line_no, 16, 'Y')
                     line_no += 1
-            '''
-            else:
-                deps_str = 'N/A'
-            if deps_str != 'N/A':
-                deps_str = deps_str[0:-1]
 
-            style = xlwt.XFStyle()
-            style.alignment.wrap = 1
-            sheet_job.write(line_no, 11, deps_str, style)
-            '''
-    book.save(r'c:\applications.xls')
+    book.save(r'c:\applications_nv.xls')
 
-'''
-parser = argparse.ArgumentParser()
-parser.add_argument("echo", help="echo the detail argments about the compare information", type=int)
-parser.add_argument("-v", "--verbose", help="verbose infomation about compare", action="store_true")
+
+parser = argparse.ArgumentParser(description='TWS Useful Tool')
+parser.add_argument("--comp", nargs=2)
+parser.add_argument("--xsl", nargs=1)
 args = parser.parse_args()
-print args.echo
+
+print args
+if args.xsl:
+    print 'Write to Ad Infomation To xsl'
+else:
+    file1 = args.comp[0]
+    file2 = args.comp[1]
+    ad_parser = twsparser.make_all_ad_parser()
+    result_ads1 = ad_parser.parseFile(file1, parseAll=True)
+    result_ads2 = ad_parser.parseFile(file2, parseAll=True)
+    make_ad_compare(result_ads1, result_ads2)
+
+
 '''
-
 ad_parser = make_all_ad_parser()
-result_ads1 = ad_parser.parseFile(r"c:\SYSADM.WSNOVA.UNLOAD.SAD.D141215", parseAll=True)
+result_ads1 = ad_parser.parseFile(r"c:\TWSNOVA.UNLOAD.AD.TEMP.D141218A", parseAll=True)
 write_to_xsl(result_ads1)
-
+'''
 '''
 #result_ads1 = ad_parser.parseFile(r"c:\parseTws.txt", parseAll=True)
 result_ads2 = ad_parser.parseFile(r"c:\parseTws2.txt", parseAll=True)
 make_ad_compare(result_ads1, result_ads2)
 '''
-
 
 '''
 ad_dict = {}
@@ -223,8 +222,4 @@ file_handle.write('\r\n'.join(all_pred_job_list))
 
 
 '''
-
-
-
-
 

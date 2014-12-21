@@ -9,12 +9,6 @@ def make_all_ad_parser():
     t_lpare = Literal('(').suppress()
     t_rpare = Literal(')').suppress()
 
-    def make_list(t):
-        pass
-
-    def create_ad():
-        pass
-
     def create_expr(literalname, resultname):
         return Literal(literalname + '(').suppress() + Word(alphanums)(resultname) + t_rpare
 
@@ -28,8 +22,6 @@ def make_all_ad_parser():
         job_dep = Literal('ADDEP').suppress() + Literal('ACTION(ADD)').suppress() + OneOrMore(
             pre_wsid | pre_opno | pre_jobn | pre_adid | transpt | descr)
         job_dep.setParseAction(lambda t: JobDep(t))
-
-        # job_dep.parseWithTabs()
         return job_dep
 
     def make_job_adsr_parser():
@@ -100,6 +92,7 @@ def make_all_ad_parser():
                                           prtclass | psnum | reroutable | restartable | smoothing | startday | starttime | time | usesai |
                                           usextname | usextse | job_adsr) + ZeroOrMore(job_dep)('deps')
         job.setParseAction(lambda t: Job(t))
+        # job.setDebug(True)
         return job
 
     def make_adrun_parser():
@@ -146,7 +139,7 @@ def make_all_ad_parser():
         adtype = create_expr('ADTYPE', 'adtype')
         advalfrom = create_expr('ADVALFROM', 'advalfrom')
         calendar = create_expr('CALENDAR', 'calendar')
-        descr = Literal('DESCR(\'').suppress() + Optional(ZeroOrMore(Word(alphanums + '\&'))) + Literal('\')').suppress()
+        descr = Literal('DESCR(\'').suppress() + Optional(ZeroOrMore(Word(alphanums + '\&' + '\/'))) + Literal('\')').suppress()
         dlimfdbk = create_expr('DLIMFDBK', 'dlimfdbk')
         dsmoothing = create_expr('DSMOOTHING', 'dsmoothing')
         group = create_expr('GROUP', 'group')
@@ -169,6 +162,7 @@ def make_all_ad_parser():
         #print adrule
 
         job = make_job_parser()
+        job.setName('Job Parser')
         adsr = make_job_adsr_parser()
 
         jobsr = Group(job('job') + ZeroOrMore(adsr)('srs'))
