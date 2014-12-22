@@ -12,6 +12,9 @@ def make_all_ad_parser():
     def create_expr(literalname, resultname):
         return Literal(literalname + '(').suppress() + Word(alphanums)(resultname) + t_rpare
 
+    def make_list(token):
+        pass
+
     def make_job_deps_parser():
         pre_adid = Literal('PREADID(').suppress() + Word(alphanums)("preadid") + t_rpare
         pre_wsid = Literal('PREWSID(').suppress() + Word(alphanums)("prewsid") + t_rpare
@@ -174,7 +177,9 @@ def make_all_ad_parser():
         return ad.setParseAction(lambda t: Ad(t))
 
     #return make_adrule_parser()
-    return OneOrMore(make_ad_parser())
+    # OPTIONS DURUNIT(SECONDS)
+    optional_prefix = Optional(Literal('OPTIONS')).suppress() + Optional(Literal('DURUNIT(SECONDS)')).suppress()
+    return optional_prefix + OneOrMore(make_ad_parser())
 
 
 

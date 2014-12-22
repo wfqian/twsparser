@@ -48,8 +48,6 @@ class Job(object):
             if key != 'job':
                 self.__dict__[key] = getattr(token, key)
 
-
-
     def __str__(self):
 
         job_body_attrs = []
@@ -152,7 +150,7 @@ class Ad(object):
 
         ad_body_others = []
         for k, v in vars(self).items():
-            if k not in ['jobs', 'job_dict', 'jobsrs'] and k in self.diff_attr_dict:
+            if k not in ['jobs', 'job_dict', 'jobsrs', 'runrules', 'runrule'] and k in self.diff_attr_dict:
                 ad_body_others.append(Ad.HTML_AD_ATTR % (k.upper(), v))
         ad_body_others = ''.join(ad_body_others)
 

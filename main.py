@@ -169,24 +169,39 @@ def write_to_xsl(ads):
                     sheet_job.write(line_no, 16, 'Y')
                     line_no += 1
 
-    book.save(r'c:\applications_nv.xls')
+    book.save(r'applications_output.xls')
 
 
-parser = argparse.ArgumentParser(description='TWS Useful Tool')
-parser.add_argument("--comp", nargs=2)
-parser.add_argument("--xsl", nargs=1)
-args = parser.parse_args()
+try:
+    parser = argparse.ArgumentParser(description='TWS Useful Tool')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-c", "--comp", nargs=2, help='compare two file in html format', metavar=('file1', 'file2'))
+    group.add_argument("-x", "--xsl", nargs=1, metavar='file')
+    args = parser.parse_args()
+except Exception, e:
+    print e
 
-print args
+
 if args.xsl:
-    print 'Write to Ad Infomation To xsl'
+    # print args.xsl[0]
+    try:
+        ad_parser = twsparser.make_all_ad_parser()
+        result_ads1 = ad_parser.parseFile(args.xsl[0], parseAll=True)
+        write_to_xsl(result_ads1)
+    except Exception, e:
+        print 'An error occurred, please send following message to boss Qian: ', e
+elif args.comp:
+    try:
+        file1 = args.comp[0]
+        file2 = args.comp[1]
+        ad_parser = twsparser.make_all_ad_parser()
+        result_ads1 = ad_parser.parseFile(file1, parseAll=True)
+        result_ads2 = ad_parser.parseFile(file2, parseAll=True)
+        make_ad_compare(result_ads1, result_ads2)
+    except Exception, e:
+        print 'An error occurred, please send following message to boss Qian: ', e
 else:
-    file1 = args.comp[0]
-    file2 = args.comp[1]
-    ad_parser = twsparser.make_all_ad_parser()
-    result_ads1 = ad_parser.parseFile(file1, parseAll=True)
-    result_ads2 = ad_parser.parseFile(file2, parseAll=True)
-    make_ad_compare(result_ads1, result_ads2)
+        print 'please type twsbox -h and refer to the user manual'
 
 
 '''
